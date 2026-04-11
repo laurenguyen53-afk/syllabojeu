@@ -115,11 +115,82 @@ h1{font-family:'Quicksand',sans-serif;font-size:2rem;font-weight:700;color:#E872
 .dots span:nth-child(3){animation-delay:0.36s;}
 @keyframes dot{0%,80%,100%{transform:scale(0.5);opacity:0.3}40%{transform:scale(1);opacity:1}}
 .api-note{text-align:center;font-size:0.62rem;color:#D4B49A;margin-top:10px;font-family:'Quicksand',sans-serif;}
+
+/* ── ÉCRAN DE SÉLECTION ÉLÈVE ── */
+#selection-screen{
+  position:fixed;inset:0;background:#F5EDE4;
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;padding:20px;
+}
+.selection-card{
+  background:#FFF9F0;border-radius:24px;
+  padding:2rem 1.8rem;max-width:420px;width:100%;
+  box-shadow:0 8px 32px rgba(232,114,74,0.15);
+  text-align:center;
+}
+.selection-card h2{
+  font-size:1.5rem;font-weight:700;color:#E8724A;margin-bottom:0.3rem;
+}
+.selection-card p{
+  font-size:0.82rem;color:#C49A7A;font-weight:600;margin-bottom:1.6rem;
+}
+.prenom-grid{
+  display:flex;flex-wrap:wrap;gap:10px;
+  justify-content:center;margin-bottom:1.4rem;
+}
+.prenom-btn{
+  font-family:'Quicksand',sans-serif;font-weight:700;
+  font-size:0.95rem;padding:10px 20px;border-radius:50px;
+  border:2.5px solid #E8724A;background:white;color:#E8724A;
+  cursor:pointer;transition:all 0.18s;
+}
+.prenom-btn:hover{background:#E8724A;color:white;transform:translateY(-2px);}
+.selection-empty{
+  font-size:0.85rem;color:#C49A7A;font-style:italic;
+  background:#FFF0E8;border-radius:12px;padding:16px;
+  margin-bottom:1rem;line-height:1.6;
+}
+.btn-teacher-link{
+  display:inline-block;font-family:'Quicksand',sans-serif;
+  font-weight:600;font-size:0.78rem;color:#2A9D8F;
+  text-decoration:none;border:2px solid #2A9D8F;
+  border-radius:50px;padding:7px 16px;transition:all 0.18s;
+  margin-top:0.4rem;
+}
+.btn-teacher-link:hover{background:#2A9D8F;color:white;}
+.eleve-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#E1F5F3;border:2px solid #2A9D8F;
+  border-radius:50px;padding:6px 14px;
+  font-size:0.82rem;font-weight:700;color:#1D7A6E;
+  cursor:pointer;transition:all 0.18s;
+}
+.eleve-badge:hover{background:#2A9D8F;color:white;}
 </style>
 </head>
 <body>
+
+<!-- ══ ÉCRAN DE SÉLECTION ÉLÈVE ══ -->
+<div id="selection-screen">
+  <div class="selection-card">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem;">🧩</div>
+    <h2>SyllaboJeu</h2>
+    <p>Qui joue aujourd'hui ?</p>
+    <div class="prenom-grid" id="prenom-grid">
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+    <div id="selection-empty" style="display:none;">
+      <div class="selection-empty">
+        Aucun élève n'est encore configuré.<br>
+        L'enseignant doit d'abord créer la liste de la classe dans l'espace enseignant.
+      </div>
+      <a href="teacher.html" class="btn-teacher-link">⚙️ Espace enseignant</a>
+    </div>
+  </div>
+</div>
+
 <canvas id="emoji-canvas" width="150" height="150"></canvas>
-<div id="app">
+<div id="app" style="display:none;">
   <h1>🧩 SyllaboJeu</h1>
   <p class="tagline">Recompose l'image pour trouver le mot !</p>
   <div class="score-row">
@@ -127,6 +198,15 @@ h1{font-family:'Quicksand',sans-serif;font-size:2rem;font-weight:700;color:#E872
     <div id="mode-badge" class="mode-badge mode-ia">🤖 Mode IA</div>
     <div>Score : <strong id="score" style="color:#E8724A;">0</strong></div>
   </div>
+
+  <!-- Badge élève connecté -->
+  <div style="display:flex;justify-content:center;margin-bottom:0.7rem;">
+    <div class="eleve-badge" onclick="changerEleve()" title="Changer d'élève">
+      👤 <span id="eleve-nom-badge">—</span>
+      <span style="font-size:0.7rem;opacity:0.7;">· changer</span>
+    </div>
+  </div>
+
   <div class="top-controls">
     <div class="level-bar">
       <button class="lvl-btn active" onclick="setLevel(1)">Niveau 1 — 2 syllabes</button>
@@ -194,16 +274,11 @@ h1{font-family:'Quicksand',sans-serif;font-size:2rem;font-weight:700;color:#E872
     <button class="btn btn-next" id="btn-next" onclick="nextWord()" style="display:none">➡️ Mot suivant</button>
   </div>
   <div class="feedback" id="feedback"></div>
-  <div class="api-note">⚠️ Nécessite une clé API Google Gemini (gratuite sur aistudio.google.com) et une connexion internet. Microphone requis pour la répétition orale (Chrome recommandé).</div>
+  <div class="api-note">⚠️ Nécessite une clé API Google Gemini et une connexion internet. Microphone requis pour la répétition orale (Chrome recommandé).</div>
 </div>
 
 <script>
-// ============================================================
-// SYLLABOJEU — Application FLE pour élèves allophones UPE2A
-// Collez votre clé API Google Gemini ci-dessous
-// Obtenez-la gratuitement sur : https://aistudio.google.com
-// ============================================================
-const GEMINI_API_KEY = 'AIzaSyCUohCN0hZS8PPqEsBDyaOYUpJrQ72yyKA'; // ex: 'AIzaSy...'
+const GEMINI_API_KEY = 'AIzaSyCUohCN0hZS8PPqEsBDyaOYUpJrQ72yyKA';
 
 const PALETTE=['#F4A261','#E76F51','#2A9D8F','#E9C46A','#8ECAE6','#A8DADC','#F4978E','#B5E48C'];
 const BG_COLORS=['#FFF8DC','#E8F5E9','#E3F2FD','#FFF0F5','#E0F7FA','#FCE4EC','#FFF3E0','#EDE7F6'];
@@ -265,25 +340,90 @@ const FALLBACK={
   ]
 };
 
-let currentLevel=1,currentWord=null,placed=[],score=0;
-let isLoading=false,srcCanvas=null,frVoice=null;
-let mode='ia',customList=[],customQueue=[];
+// ══ ÉTAT ══
+let currentLevel=1, currentWord=null, placed=[], score=0;
+let isLoading=false, srcCanvas=null, frVoice=null;
+let mode='ia', customList=[], customQueue=[];
 let fallbackIdx={1:0,2:0,3:0};
 const usedWords=new Set();
-let pickerTargetIdx=null,currentCat='Animaux';
-let prononceEssais=0,prononceMax=3;
+let pickerTargetIdx=null, currentCat='Animaux';
+let prononceEssais=0, prononceMax=3;
 
+// ══ ÉLÈVE CONNECTÉ ══
+let eleveActuel = null; // {prenom, nom, l1, niveau}
+
+// ══ SÉLECTION ÉLÈVE AU DÉMARRAGE ══
+function initSelectionScreen() {
+  const eleves = getEleves();
+  const grid = document.getElementById('prenom-grid');
+  const emptyDiv = document.getElementById('selection-empty');
+
+  if (!eleves.length) {
+    grid.innerHTML = '';
+    emptyDiv.style.display = 'block';
+    return;
+  }
+
+  emptyDiv.style.display = 'none';
+  grid.innerHTML = eleves.map(e =>
+    `<button class="prenom-btn" onclick="choisirEleve('${e.prenom.replace(/'/g,"\\'")}')">
+      ${e.prenom}
+    </button>`
+  ).join('');
+}
+
+function getEleves() {
+  try { return JSON.parse(localStorage.getItem('sj_eleves') || '[]'); } catch { return []; }
+}
+
+function choisirEleve(prenom) {
+  const eleves = getEleves();
+  eleveActuel = eleves.find(e => e.prenom === prenom) || { prenom, nom: '', l1: '', niveau: currentLevel };
+  document.getElementById('selection-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('eleve-nom-badge').textContent = eleveActuel.prenom;
+  // Appliquer le niveau de l'élève
+  setLevel(eleveActuel.niveau || 1);
+  loadWord();
+}
+
+function changerEleve() {
+  eleveActuel = null;
+  document.getElementById('selection-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  initSelectionScreen();
+}
+
+// ══ SAUVEGARDE DES RÉSULTATS ══
+function sauvegarderResultat(mot, reussite_syllabation, smiley_oral, essais_oral, smiley_syllabation) {
+  if (!eleveActuel) return;
+  const key = `sj_resultats_${eleveActuel.prenom}`;
+  let resultats = [];
+  try { resultats = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+  resultats.push({
+    date: new Date().toISOString(),
+    mot,
+    niveau: currentLevel,
+    smiley_syllabation: smiley_syllabation || '😄',
+    smiley_oral: smiley_oral || '😐',
+    essais_oral: essais_oral || 0,
+    reussite_syllabation
+  });
+  localStorage.setItem(key, JSON.stringify(resultats));
+}
+
+// ══ VOIX ══
 function initVoices(){
   const v=window.speechSynthesis.getVoices();
   frVoice=v.find(x=>x.lang==='fr-FR'&&x.localService)||v.find(x=>x.lang==='fr-FR')||v.find(x=>x.lang.startsWith('fr'))||null;
 }
-window.speechSynthesis.onvoiceschanged=initVoices;initVoices();
+window.speechSynthesis.onvoiceschanged=initVoices; initVoices();
 
 function speak(text,rate,onEnd){
   window.speechSynthesis.cancel();
   setTimeout(()=>{
     const u=new SpeechSynthesisUtterance(text);
-    u.lang='fr-FR';u.rate=rate||0.82;
+    u.lang='fr-FR'; u.rate=rate||0.82;
     if(frVoice)u.voice=frVoice;
     if(onEnd)u.onend=onEnd;
     window.speechSynthesis.speak(u);
@@ -300,21 +440,19 @@ function showBar(text){
 function drawEmojiToCanvas(emoji,bg){
   const c=document.getElementById('emoji-canvas');
   const ctx=c.getContext('2d');
-  c.width=150;c.height=150;ctx.clearRect(0,0,150,150);
-  ctx.fillStyle=bg||'#FFF8DC';ctx.beginPath();ctx.roundRect(0,0,150,150,14);ctx.fill();
-  ctx.font='88px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(emoji,75,80);
+  c.width=150; c.height=150; ctx.clearRect(0,0,150,150);
+  ctx.fillStyle=bg||'#FFF8DC'; ctx.beginPath(); ctx.roundRect(0,0,150,150,14); ctx.fill();
+  ctx.font='88px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(emoji,75,80);
   return c;
 }
 
 function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// ===== RECONNAISSANCE VOCALE =====
+// ══ RECONNAISSANCE VOCALE ══
 function normalise(str){
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'').trim();
 }
 
-// Distance de Levenshtein — mesure le nombre de changements entre deux mots
-// Bien plus précis que compter les lettres communes
 function levenshtein(a,b){
   const m=a.length,n=b.length;
   const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
@@ -324,8 +462,6 @@ function levenshtein(a,b){
   return dp[m][n];
 }
 
-// Détecte si un mot se termine par une voyelle nasale française
-// (in, on, an, un, ain, ein, etc.)
 function terminaisonNasale(str){
   return /(?:in|ain|ein|un|on|an|en)$/i.test(str);
 }
@@ -333,39 +469,18 @@ function terminaisonNasale(str){
 function scoreSimilarite(cible,entendu){
   const nc=normalise(cible),ne=normalise(entendu);
   if(nc===ne)return 1.0;
-
-  // Score orthographique de base (Levenshtein)
   const dist=levenshtein(nc,ne);
   const maxLen=Math.max(nc.length,ne.length);
   let score=1-(dist/maxLen);
-
-  // PÉNALITÉ NASALES :
-  // Si le mot cible se termine par une nasale (lapin, ballon, maison...)
-  // et que l'élève a ajouté un "e" final (lapine, ballone...)
-  // → ce n'est pas correct, on pénalise
   if(terminaisonNasale(nc)){
-    // L'élève a dit le mot + "e" (lapine, ballone)
-    if(ne===nc+'e' || ne===nc.replace(/n$/,'ne')){
-      score=Math.min(score,0.6); // force à "moyen" maximum
-    }
-    // L'élève a espacé (la pine, bal lone)
+    if(ne===nc+'e'||ne===nc.replace(/n$/,'ne')){score=Math.min(score,0.6);}
     const neCompact=ne.replace(/\s/g,'');
-    if(neCompact===nc+'e'){
-      score=Math.min(score,0.6);
-    }
+    if(neCompact===nc+'e'){score=Math.min(score,0.6);}
   }
-
-  // Pénalité si longueur très différente (mandarine vs lapin)
-  if(ne.length>nc.length*2 || nc.length>ne.length*2){
-    score=score*0.65;
-  }
-
-  // Bonus si le mot cible est contenu dans la transcription
-  // ex: "le lapin" quand on attendait "lapin"
+  if(ne.length>nc.length*2||nc.length>ne.length*2){score=score*0.65;}
   const neNoSpace=ne.replace(/\s/g,'');
-  if(neNoSpace===nc) return 1.0;
-  if(ne.split(' ').some(w=>w===nc)) return Math.max(score,0.9);
-
+  if(neNoSpace===nc)return 1.0;
+  if(ne.split(' ').some(w=>w===nc))return Math.max(score,0.9);
   return score;
 }
 
@@ -375,8 +490,15 @@ function getSmiley(score){
   return{smiley:'😬',msg:'Presque ! On réessaie ?',couleur:'#E76F51'};
 }
 
+// Variables pour stocker le résultat de la prononciation
+let _smileyCourant = '😐';
+let _essaisCourants = 0;
+let _syllabationReussie = false;
+
 function initPrononceZone(){
   prononceEssais=0;
+  _essaisCourants=0;
+  _smileyCourant='😐';
   document.getElementById('prononce-zone').classList.add('active');
   document.getElementById('smiley').textContent='🙂';
   document.getElementById('smiley-msg').textContent='';
@@ -401,7 +523,7 @@ function initPrononceZone(){
 }
 
 function renderEssaisDots(){
-  const row=document.getElementById('essais-row');row.innerHTML='';
+  const row=document.getElementById('essais-row'); row.innerHTML='';
   for(let i=0;i<prononceMax;i++){
     const dot=document.createElement('div');
     dot.className='essai-dot';
@@ -413,11 +535,13 @@ function renderEssaisDots(){
 function startListening(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){
-    document.getElementById('transcrit').textContent='Reconnaissance vocale non disponible — utilise Chrome avec le micro autorisé.';
+    document.getElementById('transcrit').textContent='Reconnaissance vocale non disponible — utilise Chrome.';
     document.getElementById('smiley').textContent='🤷';
     document.getElementById('smiley-msg').textContent='Active le microphone dans Chrome !';
     document.getElementById('btn-repete').disabled=true;
     document.getElementById('btn-next').style.display='flex';
+    // Sauvegarder sans résultat oral
+    sauvegarderResultat(currentWord.mot, _syllabationReussie, '😐', 0, '😄');
     return;
   }
   const btn=document.getElementById('btn-repete');
@@ -428,7 +552,7 @@ function startListening(){
   document.getElementById('transcrit').textContent='';
 
   const rec=new SR();
-  rec.lang='fr-FR';rec.interimResults=false;rec.maxAlternatives=3;
+  rec.lang='fr-FR'; rec.interimResults=false; rec.maxAlternatives=3;
 
   rec.onresult=(e)=>{
     const results=Array.from(e.results[0]).map(r=>r.transcript);
@@ -449,6 +573,7 @@ function startListening(){
       document.getElementById('transcrit').textContent='Microphone bloqué — autorise-le dans Chrome !';
       document.getElementById('btn-next').style.display='flex';
       btn.disabled=true;
+      sauvegarderResultat(currentWord.mot, _syllabationReussie, '😐', 0, '😄');
     } else {
       document.getElementById('transcrit').textContent='Erreur microphone : '+e.error;
       handlePrononceResult(0);
@@ -461,7 +586,9 @@ function startListening(){
 
 function handlePrononceResult(sc){
   prononceEssais++;
+  _essaisCourants = prononceEssais;
   const {smiley,msg,couleur}=getSmiley(sc);
+  _smileyCourant = smiley;
   document.getElementById('smiley').textContent=smiley;
   document.getElementById('smiley-msg').textContent=msg;
   document.getElementById('smiley-msg').style.color=couleur;
@@ -473,11 +600,15 @@ function handlePrononceResult(sc){
     btn.disabled=true;
     document.getElementById('repete-icon').textContent='✅';
     document.getElementById('repete-label').textContent='Bravo !';
+    // Sauvegarder : réussi
+    sauvegarderResultat(currentWord.mot, _syllabationReussie, '😄', prononceEssais, '😄');
     speak('Bravo ! Très bonne prononciation !',0.9,()=>{
       document.getElementById('btn-next').style.display='flex';
     });
   } else if(prononceEssais>=prononceMax){
     btn.disabled=true;
+    // Sauvegarder : dernier essai
+    sauvegarderResultat(currentWord.mot, _syllabationReussie, smiley, prononceEssais, '😄');
     speak(currentWord.mot,0.5,()=>{
       document.getElementById('prononce-title').textContent='💪 Continue ! Écoute encore une fois...';
       setTimeout(()=>{document.getElementById('btn-next').style.display='flex';},1200);
@@ -485,14 +616,14 @@ function handlePrononceResult(sc){
   } else {
     const restants=prononceMax-prononceEssais;
     document.getElementById('prononce-title').textContent='🎤 Réessaie ! ('+restants+' essai'+(restants>1?'s':'')+' restant'+(restants>1?'s':'')+')';
-    btn.disabled=false;btn.classList.remove('listening');
+    btn.disabled=false; btn.classList.remove('listening');
     document.getElementById('repete-icon').textContent='🎤';
     document.getElementById('repete-label').textContent='Réessayer';
     setTimeout(()=>speak(currentWord.mot,0.55),800);
   }
 }
 
-// ===== SÉLECTEUR EMOJI =====
+// ══ SÉLECTEUR EMOJI ══
 function renderEmojiPicker(){
   document.getElementById('emoji-cats').innerHTML=Object.keys(EMOJI_CATS).map(cat=>
     `<button class="emoji-cat ${cat===currentCat?'active':''}" onclick="switchCat('${cat}')">${cat}</button>`
@@ -507,7 +638,7 @@ function selectEmoji(emoji){
   if(pickerTargetIdx===null)return;
   customList[pickerTargetIdx].emoji=emoji;
   document.getElementById('emoji-picker').classList.remove('open');
-  pickerTargetIdx=null;renderWordList();
+  pickerTargetIdx=null; renderWordList();
 }
 
 function renderWordList(){
@@ -552,7 +683,7 @@ function togglePerso(){
 
 function applyPerso(){
   if(customList.length===0){alert('Ajoutez au moins un mot !');return;}
-  customQueue=[];mode='custom';
+  customQueue=[]; mode='custom';
   document.getElementById('mode-badge').className='mode-badge mode-custom';
   document.getElementById('mode-badge').textContent='✏️ Mode personnalisé ('+customList.length+' mots)';
   document.getElementById('btn-perso').classList.add('active-mode');
@@ -562,7 +693,7 @@ function applyPerso(){
 }
 
 function resetPerso(){
-  mode='ia';customList=[];customQueue=[];
+  mode='ia'; customList=[]; customQueue=[];
   document.getElementById('mode-badge').className='mode-badge mode-ia';
   document.getElementById('mode-badge').textContent='🤖 Mode IA';
   document.getElementById('btn-perso').classList.remove('active-mode');
@@ -571,7 +702,7 @@ function resetPerso(){
   loadWord();
 }
 
-// ===== API CLAUDE =====
+// ══ API GEMINI ══
 async function callGemini(prompt,maxTokens){
   const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_API_KEY;
   const res=await fetch(url,{
@@ -610,11 +741,15 @@ async function generateInventedImageSVG(inventedWord){
 }
 
 function getFallback(level){const list=FALLBACK[level];const idx=fallbackIdx[level]%list.length;fallbackIdx[level]++;return list[idx];}
-function setLevel(lvl){currentLevel=lvl;document.querySelectorAll('.lvl-btn').forEach((b,i)=>b.classList.toggle('active',i+1===lvl));loadWord();}
+function setLevel(lvl){
+  currentLevel=lvl;
+  document.querySelectorAll('.lvl-btn').forEach((b,i)=>b.classList.toggle('active',i+1===lvl));
+}
 
 async function loadWord(){
   if(isLoading)return;
-  isLoading=true;placed=[];currentWord=null;
+  isLoading=true; placed=[]; currentWord=null;
+  _syllabationReussie=false; _smileyCourant='😐'; _essaisCourants=0;
   document.getElementById('feedback').innerHTML='';
   document.getElementById('invented-container').innerHTML='';
   document.getElementById('speaking-bar').textContent='';
@@ -625,7 +760,7 @@ async function loadWord(){
   document.getElementById('btn-validate').style.display='';
   const outer=document.getElementById('puzzle-outer');
   outer.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
-  outer.classList.remove('solved');outer.style.borderColor='#F5D5C0';outer.style.boxShadow='none';
+  outer.classList.remove('solved'); outer.style.borderColor='#F5D5C0'; outer.style.boxShadow='none';
   document.getElementById('btn-placed').disabled=true;
 
   let obj=null;
@@ -651,7 +786,7 @@ async function loadWord(){
 }
 
 function renderPuzzle(){
-  const outer=document.getElementById('puzzle-outer');outer.innerHTML='';
+  const outer=document.getElementById('puzzle-outer'); outer.innerHTML='';
   const syls=currentWord.syllabes,n=syls.length,W=150,bandW=Math.floor(W/n);
   const isCorrect=placed.length===n&&placed.join('')===syls.join('');
   const remaining=syls.filter(s=>!placed.includes(s));
@@ -663,13 +798,13 @@ function renderPuzzle(){
     if(pos>0){const sep=document.createElement('div');sep.className='band-sep';sep.style.left=(pos*bandW)+'px';outer.appendChild(sep);}
     const band=document.createElement('div');
     band.className='band '+(isCorrect?'lit':isPlaced?'lit':'dark');
-    band.style.left=(pos*bandW)+'px';band.style.width=w+'px';
+    band.style.left=(pos*bandW)+'px'; band.style.width=w+'px';
     if(isPlaced&&!isCorrect)band.style.transform='translateY(-3px)';
-    const bc=document.createElement('canvas');bc.width=150;bc.height=150;
+    const bc=document.createElement('canvas'); bc.width=150; bc.height=150;
     bc.style.cssText='position:absolute;top:0;left:'+(-sylIndex*bandW)+'px;width:150px;height:150px;';
     bc.getContext('2d').drawImage(srcCanvas,0,0,150,150);
     band.appendChild(bc);
-    const lbl=document.createElement('div');lbl.className='band-syl';lbl.textContent=syl;band.appendChild(lbl);
+    const lbl=document.createElement('div'); lbl.className='band-syl'; lbl.textContent=syl; band.appendChild(lbl);
     outer.appendChild(band);
   });
   if(isCorrect){outer.classList.add('solved');outer.style.borderColor='#2A9D8F';outer.style.boxShadow='0 0 0 4px rgba(42,157,143,0.2)';}
@@ -677,33 +812,33 @@ function renderPuzzle(){
 }
 
 function renderPool(syllables){
-  const pool=document.getElementById('pool');pool.innerHTML='';
+  const pool=document.getElementById('pool'); pool.innerHTML='';
   syllables.forEach((syl,i)=>{
-    const btn=document.createElement('button');btn.className='syl-btn';btn.textContent=syl;
-    btn.style.background=PALETTE[i%PALETTE.length];btn.dataset.syl=syl;
-    btn.onclick=()=>pickSyl(btn,syl);pool.appendChild(btn);
+    const btn=document.createElement('button'); btn.className='syl-btn'; btn.textContent=syl;
+    btn.style.background=PALETTE[i%PALETTE.length]; btn.dataset.syl=syl;
+    btn.onclick=()=>pickSyl(btn,syl); pool.appendChild(btn);
   });
 }
 
 function pickSyl(btn,syl){
   if(btn.classList.contains('used'))return;
-  btn.classList.add('used');placed.push(syl);
-  showBar(currentWord.mot+' (lentement)');speak(currentWord.mot,0.45);
-  renderTarget();renderPuzzle();updatePlacedBtn();
+  btn.classList.add('used'); placed.push(syl);
+  showBar(currentWord.mot+' (lentement)'); speak(currentWord.mot,0.45);
+  renderTarget(); renderPuzzle(); updatePlacedBtn();
 }
 
 function renderTarget(){
-  const zone=document.getElementById('target-zone');zone.innerHTML='';
+  const zone=document.getElementById('target-zone'); zone.innerHTML='';
   if(placed.length===0){zone.innerHTML='<span style="font-size:0.85rem;color:#D4B49A;font-family:Andika,sans-serif;">clique sur une syllabe...</span>';return;}
   placed.forEach((syl,i)=>{
-    const btn=document.createElement('button');btn.className='syl-placed';
-    btn.style.background=PALETTE[i%PALETTE.length];btn.textContent=syl;
-    btn.onclick=()=>removeSyl(i,syl);zone.appendChild(btn);
+    const btn=document.createElement('button'); btn.className='syl-placed';
+    btn.style.background=PALETTE[i%PALETTE.length]; btn.textContent=syl;
+    btn.onclick=()=>removeSyl(i,syl); zone.appendChild(btn);
   });
 }
 
 function removeSyl(idx,syl){
-  placed.splice(idx,1);renderTarget();renderPuzzle();updatePlacedBtn();
+  placed.splice(idx,1); renderTarget(); renderPuzzle(); updatePlacedBtn();
   document.querySelectorAll('.syl-btn').forEach(b=>{if(b.dataset.syl===syl&&b.classList.contains('used'))b.classList.remove('used');});
 }
 
@@ -711,7 +846,7 @@ function updatePlacedBtn(){document.getElementById('btn-placed').disabled=placed
 
 function listenPlaced(){
   if(placed.length===0)return;
-  const btn=document.getElementById('btn-placed');btn.textContent='🔈 Lecture...';
+  const btn=document.getElementById('btn-placed'); btn.textContent='🔈 Lecture...';
   showBar(placed.join(''));
   document.getElementById('feedback').innerHTML='<span>Je lis : '+placed.join(' — ')+'</span>';
   speak(placed.join(''),0.75,()=>{btn.textContent='👂 Ma tentative';});
@@ -738,21 +873,26 @@ function validateWord(){
   const fb=document.getElementById('feedback');
   if(placed.length===0){fb.innerHTML='<span>👆 Place d\'abord des syllabes !</span>';return;}
   if(attempt===correct){
-    score+=10;document.getElementById('score').textContent=score;
+    score+=10; document.getElementById('score').textContent=score;
     fb.innerHTML='<span>🎉 Bravo ! C\'est <strong>'+currentWord.mot+'</strong> !</span>';
+    _syllabationReussie=true;
     renderPuzzle();
     document.getElementById('invented-container').innerHTML='';
     setTimeout(()=>initPrononceZone(),600);
   } else {
     fb.innerHTML='<span>🤔 Presque... tu as inventé "'+attempt+'" !</span>';
     speak('Pas tout à fait, mais tu as inventé le mot '+attempt,0.82);
+    _syllabationReussie=false;
     renderPuzzle();
     document.getElementById('stars').textContent='⭐☆☆';
+    // Sauvegarder l'échec de syllabation
+    sauvegarderResultat(currentWord.mot, false, '😬', 0, '😬');
     generateInventedImage(attempt);
   }
 }
 
-loadWord();
+// ══ INIT ══
+initSelectionScreen();
 </script>
 </body>
 </html>
