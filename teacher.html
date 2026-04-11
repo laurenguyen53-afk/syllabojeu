@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SyllaboJeu — Espace Enseignant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Andika:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --orange: #E8724A;
+      --teal: #2A9D8F;
+      --bg: #F5EDE4;
+      --white: #FFFFFF;
+      --dark: #2C2C2C;
+      --mid: #6B6B6B;
+      --light-teal: #E0F4F2;
+      --light-orange: #FDF0EB;
+      --border: #D9CBBF;
+      --shadow: 0 4px 20px rgba(42,157,143,0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+    /* HEADER */
+    header {
+      background: var(--white); border-bottom: 3px solid var(--orange);
+      padding: 16px 32px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 2px 12px rgba(232,114,74,0.1); position: sticky; top: 0; z-index: 200;
+    }
+    .logo-badge {
+      width: 46px; height: 46px; background: linear-gradient(135deg, var(--orange), #D4603A);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 3px 10px rgba(232,114,74,0.35); flex-shrink: 0;
+    }
+    .header-text h1 { font-size: 1.3rem; font-weight: 700; }
+    .header-text span { font-size: 0.8rem; color: var(--teal); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .header-nav { margin-left: auto; }
+    .btn-back {
+      padding: 8px 18px; border-radius: 50px; font-family: 'Quicksand', sans-serif;
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 2px solid var(--teal);
+      background: transparent; color: var(--teal); transition: all 0.2s; text-decoration: none; display: inline-block;
+    }
+    .btn-back:hover { background: var(--teal); color: white; }
+
+    /* TABS */
+    .tabs-bar { background: var(--white); border-bottom: 2px solid var(--border); display: flex; padding: 0 32px; }
+    .tab-btn {
+      padding: 14px 22px; font-family: 'Quicksand', sans-serif; font-weight: 600; font-size: 0.88rem;
+      color: var(--mid); border: none; background: none; border-bottom: 3px solid transparent;
+      margin-bottom: -2px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+    }
+    .tab-btn:hover { color: var(--dark); }
+    .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 0.72rem; font-weight: 700; background: var(--border); color: var(--mid);
+    }
+    .tab-btn.active .step-num { background: var(--orange); color: white; }
+
+    /* PANELS */
+    .panel { display: none; padding: 32px; max-width: 1100px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    /* CARDS */
+    .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
+    .card-header { padding: 18px 24px 14px; border-bottom: 2px solid var(--bg); display: flex; align-items: center; gap: 12px; }
+    .card-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .card-icon.orange { background: var(--light-orange); }
+    .card-icon.teal { background: var(--light-teal); }
+    .card-header h2 { font-size: 1rem; font-weight: 700; }
+    .card-header p { font-size: 0.78rem; color: var(--mid); margin-top: 2px; }
+    .card-body { padding: 22px; }
+
+    /* FORMS */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 0.83rem; font-weight: 700; margin-bottom: 5px; }
+    label .req { color: var(--orange); }
+    input[type="text"], select {
+      width: 100%; padding: 10px 13px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+      font-family: 'Quicksand', sans-serif; font-size: 0.92rem; font-weight: 500;
+      color: var(--dark); background: var(--bg); outline: none; transition: border-color 0.2s, box-shadow 0.2s; appearance: none;
+    }
+    input[type="password"] {
+      width: 100%; padding: 10px 13px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+      font-family: 'Andika', sans-serif; font-size: 0.85rem; font-weight: 400;
+      color: var(--dark); background: var(--bg); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, select:focus, input[type="password"]:focus {
+      border-color: var(--teal); box-shadow: 0 0 0 3px rgba(42,157,143,0.12); background: var(--white);
+    }
+    input::placeholder { color: #B0A090; font-weight: 400; }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: '▾'; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--teal); pointer-events: none; }
+    .niveau-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .niveau-btn {
+      padding: 10px 6px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); font-family: 'Quicksand', sans-serif; font-size: 0.82rem;
+      font-weight: 600; color: var(--mid); cursor: pointer; text-align: center; transition: all 0.18s;
+    }
+    .niveau-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .niveau-btn.selected { background: var(--teal); border-color: var(--teal); color: white; }
+    .niveau-sub { font-size: 0.7rem; opacity: 0.8; display: block; margin-top: 2px; }
+
+    /* BUTTONS */
+    .btn-primary {
+      padding: 12px 20px; border: none; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--orange), #D4603A); color: white;
+      font-family: 'Quicksand', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 3px 12px rgba(232,114,74,0.35); transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232,114,74,0.45); }
+    .btn-primary:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+    .btn-primary.full { width: 100%; justify-content: center; }
+    .btn-teal {
+      padding: 12px 20px; border: none; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--teal), #1E7A6E); color: white;
+      font-family: 'Quicksand', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 3px 12px rgba(42,157,143,0.35); transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-teal:hover { transform: translateY(-1px); }
+    .btn-teal:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+    .btn-teal.full { width: 100%; justify-content: center; }
+    .btn-sm {
+      padding: 7px 14px; border-radius: var(--radius-sm); font-family: 'Quicksand', sans-serif;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border);
+      background: var(--white); color: var(--mid); transition: all 0.18s;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-sm:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-sm.danger:hover { border-color: #E05252; color: #E05252; }
+    .btn-icon {
+      padding: 10px 13px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); color: var(--mid); cursor: pointer; font-size: 1rem; transition: all 0.18s; flex-shrink: 0;
+    }
+    .btn-icon:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* STEP 1 */
+    .step1-grid { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    .eleves-toolbar { padding: 12px 22px; border-bottom: 2px solid var(--bg); display: flex; align-items: center; gap: 10px; }
+    .search-wrap { flex: 1; position: relative; }
+    .search-wrap input { padding-left: 34px; font-size: 0.86rem; }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--mid); font-size: 0.88rem; pointer-events: none; }
+    .count-badge { background: var(--light-teal); color: var(--teal); font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 50px; white-space: nowrap; }
+    .eleves-list { min-height: 160px; max-height: 460px; overflow-y: auto; }
+    .eleve-empty { padding: 40px 22px; text-align: center; color: var(--mid); }
+    .eleve-empty .ei { font-size: 2.5rem; margin-bottom: 10px; display: block; opacity: 0.5; }
+    .eleve-empty p { font-size: 0.88rem; font-weight: 500; }
+    .eleve-row {
+      display: flex; align-items: center; padding: 12px 22px; border-bottom: 1px solid var(--bg);
+      gap: 12px; transition: background 0.15s; animation: slideIn 0.22s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+    .eleve-row:hover { background: var(--bg); }
+    .eleve-row:last-child { border-bottom: none; }
+    .eleve-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), #1E7A6E);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.88rem; flex-shrink: 0;
+    }
+    .eleve-info { flex: 1; min-width: 0; }
+    .eleve-name { font-weight: 700; font-size: 0.92rem; }
+    .eleve-meta { font-size: 0.75rem; color: var(--mid); margin-top: 1px; }
+    .eleve-tags { display: flex; gap: 5px; flex-shrink: 0; }
+    .tag { padding: 2px 9px; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
+    .tag-n { background: var(--light-orange); color: var(--orange); }
+    .tag-l { background: var(--light-teal); color: var(--teal); }
+    .btn-del { background: none; border: none; color: #C4B5A8; cursor: pointer; font-size: 0.95rem; padding: 3px; border-radius: 5px; transition: all 0.15s; line-height: 1; }
+    .btn-del:hover { color: #E05252; background: #FDE8E8; }
+    .action-bar { padding: 14px 22px; border-top: 2px solid var(--bg); display: flex; gap: 8px; justify-content: flex-end; }
+    .apikey-row { display: flex; gap: 8px; }
+    .apikey-row input { flex: 1; }
+
+    /* STEP 2 */
+    .selector-bar {
+      background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 18px 24px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+    }
+    .selector-bar label { font-weight: 700; font-size: 0.9rem; white-space: nowrap; margin: 0; }
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; text-align: center; }
+    .stat-val { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 0.78rem; color: var(--mid); font-weight: 600; margin-top: 4px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .chart-container { position: relative; height: 260px; }
+    .mots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .mots-list { list-style: none; }
+    .mot-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 0.88rem; }
+    .mot-item:last-child { border-bottom: none; }
+    .mot-word { font-weight: 600; }
+    .mot-count { background: var(--light-orange); color: var(--orange); font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 50px; }
+    .mot-count.teal { background: var(--light-teal); color: var(--teal); }
+    .empty-data { text-align: center; padding: 28px; color: var(--mid); font-size: 0.88rem; }
+
+    /* STEP 3 */
+    .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .ai-result {
+      background: var(--bg); border-radius: var(--radius-sm); padding: 16px; margin-top: 14px;
+      font-size: 0.87rem; line-height: 1.75; min-height: 100px; white-space: pre-wrap;
+      font-family: 'Andika', sans-serif; border: 2px solid var(--border);
+    }
+    .ai-result.loading { color: var(--mid); font-style: italic; }
+    .ai-result.error { color: #E05252; border-color: #FECACA; background: #FEF2F2; }
+    .l1-group-item {
+      padding: 10px 14px; border-radius: var(--radius-sm); background: var(--bg);
+      border: 2px solid var(--border); margin-bottom: 8px; cursor: pointer;
+      transition: all 0.18s; display: flex; align-items: center; justify-content: space-between;
+    }
+    .l1-group-item:hover { border-color: var(--teal); }
+    .l1-group-item.selected { border-color: var(--teal); background: var(--light-teal); }
+    .l1-name { font-weight: 700; font-size: 0.9rem; }
+    .l1-count { font-size: 0.78rem; color: var(--mid); margin-top: 2px; }
+    .rgpd-note { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 22px; display: flex; gap: 12px; align-items: flex-start; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--teal); color: white; padding: 11px 22px; border-radius: 50px;
+      font-weight: 600; font-size: 0.88rem; box-shadow: 0 4px 20px rgba(42,157,143,0.4);
+      z-index: 999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #E05252; }
+
+    /* SPINNER */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SCROLLBAR */
+    .eleves-list::-webkit-scrollbar { width: 4px; }
+    .eleves-list::-webkit-scrollbar-track { background: var(--bg); }
+    .eleves-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .step1-grid, .charts-grid, .mots-grid, .ai-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .panel { padding: 16px; }
+      header { padding: 12px 16px; }
+      .tabs-bar { padding: 0 12px; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-badge">🧩</div>
+  <div class="header-text">
+    <h1>SyllaboJeu</h1>
+    <span>Espace Enseignant</span>
+  </div>
+  <nav class="header-nav">
+    <a href="index.html" class="btn-back">← Retour au jeu</a>
+  </nav>
+</header>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showTab('step1',this)">
+    <div class="step-num">1</div> Configuration de la classe
+  </button>
+  <button class="tab-btn" onclick="showTab('step2',this)">
+    <div class="step-num">2</div> Tableau de bord
+  </button>
+  <button class="tab-btn" onclick="showTab('step3',this)">
+    <div class="step-num">3</div> Analyse IA
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════
+     ÉTAPE 1 — Configuration de la classe
+══════════════════════════════════════ -->
+<div id="panel-step1" class="panel active">
+  <div class="step1-grid">
+
+    <div>
+      <!-- Formulaire ajout élève -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon orange">👤</div>
+          <div><h2>Ajouter un élève</h2><p>Données sauvegardées dans le navigateur (sj_eleves)</p></div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Prénom <span class="req">*</span></label>
+              <input type="text" id="inp-prenom" placeholder="ex. Sofia" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label>Nom <span class="req">*</span></label>
+              <input type="text" id="inp-nom" placeholder="ex. Martínez" autocomplete="off" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Langue maternelle (L1) <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select id="inp-l1">
+                <option value="">— Sélectionner —</option>
+                <optgroup label="Maghreb &amp; Moyen-Orient">
+                  <option>Arabe</option><option>Arabe marocain (darija)</option>
+                  <option>Arabe algérien</option><option>Arabe tunisien</option>
+                  <option>Berbère / Tamazight</option><option>Dari / Farsi</option>
+                  <option>Pachto</option><option>Turc</option>
+                </optgroup>
+                <optgroup label="Afrique subsaharienne">
+                  <option>Bambara</option><option>Haoussa</option>
+                  <option>Peul (Fulani)</option><option>Somalien</option><option>Wolof</option>
+                </optgroup>
+                <optgroup label="Europe">
+                  <option>Albanais</option><option>Bulgare</option><option>Espagnol</option>
+                  <option>Polonais</option><option>Portugais</option><option>Roumain</option>
+                  <option>Russe</option><option>Serbo-croate</option><option>Ukrainien</option>
+                </optgroup>
+                <optgroup label="Asie du Sud &amp; du Sud-Est">
+                  <option>Chinois (mandarin)</option><option>Khmer</option>
+                  <option>Ourdou</option><option>Tamoul</option>
+                  <option>Tibétain</option><option>Vietnamien</option>
+                </optgroup>
+                <optgroup label="Autre"><option>Autre</option></optgroup>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Niveau de départ <span class="req">*</span></label>
+            <div class="niveau-grid">
+              <button class="niveau-btn" data-n="1" onclick="selectNiveau(this)">Niveau 1<span class="niveau-sub">A1 · 2 syllabes</span></button>
+              <button class="niveau-btn" data-n="2" onclick="selectNiveau(this)">Niveau 2<span class="niveau-sub">A1+ · 3 syllabes</span></button>
+              <button class="niveau-btn" data-n="3" onclick="selectNiveau(this)">Niveau 3<span class="niveau-sub">pré-A2 · 4 syllabes</span></button>
+            </div>
+          </div>
+          <button class="btn-primary full" onclick="ajouterEleve()" style="margin-top:6px;">➕ Ajouter à la classe</button>
+        </div>
+      </div>
+
+      <!-- Clé API -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon teal">🔑</div>
+          <div><h2>Clé API Gemini</h2><p>Nécessaire pour l'analyse IA (étape 3)</p></div>
+        </div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Clé Google Gemini</label>
+            <div class="apikey-row">
+              <input type="password" id="inp-apikey" placeholder="AIza..." />
+              <button class="btn-icon" onclick="toggleKey()" title="Afficher/masquer">👁</button>
+              <button class="btn-icon" onclick="saveKey()" title="Sauvegarder" style="border-color:var(--teal);color:var(--teal);">💾</button>
+            </div>
+            <p style="font-size:0.75rem;color:var(--mid);margin-top:8px;">
+              Stockée uniquement dans votre navigateur.
+              Obtenez-en une sur <a href="https://aistudio.google.com" target="_blank" style="color:var(--teal);">Google AI Studio</a> (gratuit).
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste élèves -->
+    <div class="card" style="position:sticky;top:90px;">
+      <div class="card-header">
+        <div class="card-icon teal">👥</div>
+        <div><h2>Élèves de la classe</h2><p>Partagée avec index.html via localStorage</p></div>
+      </div>
+      <div class="eleves-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="inp-search" placeholder="Rechercher…" oninput="renderEleves()" />
+        </div>
+        <div class="count-badge" id="count-badge">0 élève</div>
+      </div>
+      <div class="eleves-list" id="eleves-list"></div>
+      <div class="action-bar">
+        <button class="btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn-sm danger" onclick="viderClasse()">🗑 Vider la classe</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ÉTAPE 2 — Tableau de bord
+══════════════════════════════════════ -->
+<div id="panel-step2" class="panel">
+
+  <div class="selector-bar">
+    <label>Élève :</label>
+    <div class="select-wrap" style="flex:1;max-width:320px;">
+      <select id="sel-eleve-db" onchange="loadDashboard()"></select>
+    </div>
+    <button class="btn-sm" onclick="loadDashboard()">🔄 Actualiser</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="st-seances">—</div><div class="stat-label">Séances jouées</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-mots">—</div><div class="stat-label">Mots travaillés</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-reussite">—</div><div class="stat-label">Taux réussite syllabation</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-smiley">—</div><div class="stat-label">Dernier smiley oral</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon teal">📈</div>
+        <div><h2>Progression orale</h2><p>Score smiley moyen par séance (😄=3 😐=2 😬=1)</p></div>
+      </div>
+      <div class="card-body"><div class="chart-container"><canvas id="chart-smileys"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon orange">🧩</div>
+        <div><h2>Réussite syllabation</h2><p>Taux de réussite au puzzle par séance</p></div>
+      </div>
+      <div class="card-body"><div class="chart-container"><canvas id="chart-syllabation"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="mots-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon orange">🧩</div>
+        <div><h2>Mots difficiles — Syllabation</h2><p>Mots les plus souvent échoués au puzzle</p></div>
+      </div>
+      <div class="card-body"><ul class="mots-list" id="mots-syllabation"><li class="empty-data">Sélectionnez un élève</li></ul></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon teal">🎤</div>
+        <div><h2>Mots difficiles — Oral</h2><p>Mots les plus souvent échoués à la répétition orale</p></div>
+      </div>
+      <div class="card-body"><ul class="mots-list" id="mots-oral"><li class="empty-data">Sélectionnez un élève</li></ul></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     ÉTAPE 3 — Analyse IA
+══════════════════════════════════════ -->
+<div id="panel-step3" class="panel">
+
+  <div class="ai-grid">
+
+    <!-- Analyse individuelle -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon orange">🤖</div>
+        <div><h2>Analyse individuelle</h2><p>Hypothèse phonologique liée à la L1 de l'élève</p></div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Élève à analyser</label>
+          <div class="select-wrap">
+            <select id="sel-eleve-ai" onchange="resetAiIndiv()"></select>
+          </div>
+        </div>
+        <button class="btn-primary full" onclick="analyseIndividuelle()" id="btn-ai-indiv">🔍 Générer l'analyse individuelle</button>
+        <div class="ai-result" id="ai-indiv-result" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Analyse groupée -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon teal">🌍</div>
+        <div><h2>Analyse groupée par L1</h2><p>Patterns d'erreurs communs à une même langue maternelle</p></div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Choisir un groupe linguistique</label>
+          <div id="l1-groups-list"><p style="color:var(--mid);font-size:0.85rem;">Chargement…</p></div>
+        </div>
+        <button class="btn-teal full" onclick="analyseGroupe()" id="btn-ai-groupe" style="margin-top:8px;">🌍 Analyser ce groupe</button>
+        <div class="ai-result" id="ai-groupe-result" style="display:none;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Note RGPD -->
+  <div class="rgpd-note">
+    <span style="font-size:1.4rem;flex-shrink:0;">⚠️</span>
+    <p style="font-size:0.82rem;color:var(--mid);line-height:1.65;">
+      <strong style="color:var(--dark);">Note RGPD :</strong>
+      L'analyse IA envoie les prénoms des élèves, leurs mots échoués et leurs scores à l'API Google Gemini (serveurs hors UE).
+      Ces données concernent des mineurs. Vérifiez la conformité CNIL et informez les familles avant activation.
+      En mode personnalisé sans clé API, aucune donnée n'est transmise à des services tiers.
+    </p>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let eleves = [];
+let niveauSel = null;
+let chartSmileys = null;
+let chartSyllab = null;
+let l1GroupSel = null;
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadEleves();
+  loadKey();
+});
+
+// ═══════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'step2') initDashboard();
+  if (name === 'step3') initAI();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ÉTAPE 1 — ÉLÈVES
+// ═══════════════════════════════════════════════════════════
+function selectNiveau(btn) {
+  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  niveauSel = parseInt(btn.dataset.n);
+}
+
+function ajouterEleve() {
+  const prenom = document.getElementById('inp-prenom').value.trim();
+  const nom    = document.getElementById('inp-nom').value.trim();
+  const l1     = document.getElementById('inp-l1').value;
+  if (!prenom)   { toast('⚠️ Prénom manquant', 'error'); return; }
+  if (!nom)      { toast('⚠️ Nom manquant', 'error'); return; }
+  if (!l1)       { toast('⚠️ L1 manquante', 'error'); return; }
+  if (!niveauSel){ toast('⚠️ Niveau manquant', 'error'); return; }
+  if (eleves.find(e => e.prenom.toLowerCase() === prenom.toLowerCase())) {
+    toast(`⚠️ "${prenom}" existe déjà`, 'error'); return;
+  }
+  eleves.push({ prenom, nom, l1, niveau: niveauSel });
+  saveEleves(); renderEleves();
+  document.getElementById('inp-prenom').value = '';
+  document.getElementById('inp-nom').value = '';
+  document.getElementById('inp-l1').value = '';
+  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
+  niveauSel = null;
+  document.getElementById('inp-prenom').focus();
+  toast(`✅ ${prenom} ${nom} ajouté·e !`);
+}
+
+function supprimerEleve(prenom) {
+  if (!confirm(`Supprimer ${prenom} ? Ses résultats de jeu resteront dans le navigateur.`)) return;
+  eleves = eleves.filter(e => e.prenom !== prenom);
+  saveEleves(); renderEleves();
+  toast(`🗑 ${prenom} supprimé·e`);
+}
+
+function viderClasse() {
+  if (!eleves.length) { toast('Liste déjà vide', 'error'); return; }
+  if (!confirm(`Supprimer les ${eleves.length} élève(s) de la liste ?`)) return;
+  eleves = []; saveEleves(); renderEleves();
+  toast('🗑 Classe vidée');
+}
+
+function renderEleves() {
+  const q = (document.getElementById('inp-search').value || '').toLowerCase().trim();
+  const liste = q ? eleves.filter(e =>
+    e.prenom.toLowerCase().includes(q) || e.nom.toLowerCase().includes(q) || e.l1.toLowerCase().includes(q)
+  ) : eleves;
+  document.getElementById('count-badge').textContent = `${eleves.length} élève${eleves.length > 1 ? 's' : ''}`;
+  const cont = document.getElementById('eleves-list');
+  if (!liste.length) {
+    cont.innerHTML = `<div class="eleve-empty"><span class="ei">${q ? '🔍' : '🧑‍🎓'}</span><p>${q ? 'Aucun résultat' : 'Aucun élève.<br>Ajoutez votre classe !'}</p></div>`;
+    return;
+  }
+  cont.innerHTML = liste.map(e => {
+    const ini = (e.prenom[0] + (e.nom[0] || '')).toUpperCase();
+    const nl = ['','N1·A1','N2·A1+','N3·pré-A2'][e.niveau] || `N${e.niveau}`;
+    return `<div class="eleve-row">
+      <div class="eleve-avatar">${ini}</div>
+      <div class="eleve-info">
+        <div class="eleve-name">${e.prenom} ${e.nom}</div>
+        <div class="eleve-meta">L1 : ${e.l1}</div>
+      </div>
+      <div class="eleve-tags">
+        <span class="tag tag-l">${e.l1.split(' ')[0]}</span>
+        <span class="tag tag-n">${nl}</span>
+      </div>
+      <button class="btn-del" onclick="supprimerEleve('${e.prenom.replace(/'/g,"\\'")}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function saveEleves() { localStorage.setItem('sj_eleves', JSON.stringify(eleves)); }
+function loadEleves() {
+  try { eleves = JSON.parse(localStorage.getItem('sj_eleves') || '[]'); } catch { eleves = []; }
+  renderEleves();
+}
+
+function exportCSV() {
+  if (!eleves.length) { toast('Aucun élève', 'error'); return; }
+  const csv = 'prenom,nom,l1,niveau\n' + eleves.map(e => `"${e.prenom}","${e.nom}","${e.l1}",${e.niveau}`).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' }));
+  a.download = `syllabojeu_classe_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); toast('⬇ CSV exporté !');
+}
+
+function saveKey() {
+  const k = document.getElementById('inp-apikey').value.trim();
+  if (!k) { toast('Clé vide', 'error'); return; }
+  localStorage.setItem('sj_apikey', k); toast('🔑 Clé API sauvegardée');
+}
+function loadKey() { document.getElementById('inp-apikey').value = localStorage.getItem('sj_apikey') || ''; }
+function toggleKey() {
+  const i = document.getElementById('inp-apikey');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') ajouterEleve();
+});
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function getResultats(prenom) {
+  try { return JSON.parse(localStorage.getItem(`sj_resultats_${prenom}`) || '[]'); } catch { return []; }
+}
+function groupByDate(resultats) {
+  const map = {};
+  resultats.forEach(r => {
+    const d = (r.date || '').slice(0,10) || 'inconnu';
+    if (!map[d]) map[d] = [];
+    map[d].push(r);
+  });
+  return map;
+}
+function smileScore(s) { return s === '😄' ? 3 : s === '😐' ? 2 : 1; }
+function scoreEmoji(n) { return n >= 2.7 ? '😄' : n >= 1.8 ? '😐' : '😬'; }
+
+// ═══════════════════════════════════════════════════════════
+// ÉTAPE 2 — TABLEAU DE BORD
+// ═══════════════════════════════════════════════════════════
+function initDashboard() {
+  const sel = document.getElementById('sel-eleve-db');
+  sel.innerHTML = eleves.length
+    ? eleves.map(e => `<option value="${e.prenom}">${e.prenom} ${e.nom}</option>`).join('')
+    : '<option value="">— Aucun élève configuré —</option>';
+  if (eleves.length) loadDashboard();
+}
+
+function loadDashboard() {
+  const prenom = document.getElementById('sel-eleve-db').value;
+  if (!prenom) return;
+  const resultats = getResultats(prenom);
+  const grouped = groupByDate(resultats);
+  const dates = Object.keys(grouped).sort();
+
+  // Stats
+  const nbMots = resultats.length;
+  const okSyllab = resultats.filter(r => r.reussite_syllabation).length;
+  document.getElementById('st-seances').textContent  = dates.length || '—';
+  document.getElementById('st-mots').textContent     = nbMots || '—';
+  document.getElementById('st-reussite').textContent = nbMots ? Math.round(okSyllab/nbMots*100)+'%' : '—';
+  const last = resultats[resultats.length-1];
+  document.getElementById('st-smiley').textContent   = last ? scoreEmoji(smileScore(last.smiley_oral)) : '—';
+
+  // Données graphiques par séance
+  const smileData  = dates.map(d => {
+    const arr = grouped[d].map(r => smileScore(r.smiley_oral));
+    return +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2);
+  });
+  const syllabData = dates.map(d => {
+    const arr = grouped[d];
+    return Math.round(arr.filter(r=>r.reussite_syllabation).length/arr.length*100);
+  });
+
+  // Chart smileys
+  if (chartSmileys) chartSmileys.destroy();
+  chartSmileys = new Chart(document.getElementById('chart-smileys').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Score smiley moyen', data: smileData,
+        borderColor: '#2A9D8F', backgroundColor: 'rgba(42,157,143,0.12)',
+        borderWidth: 2.5, pointBackgroundColor: '#2A9D8F', pointRadius: 5,
+        tension: 0.35, fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { min:1, max:3, ticks: { stepSize:1, callback: v => ['','😬','😐','😄'][v]||v } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Chart syllabation
+  if (chartSyllab) chartSyllab.destroy();
+  chartSyllab = new Chart(document.getElementById('chart-syllabation').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Réussite syllabation (%)', data: syllabData,
+        backgroundColor: dates.map((_,i) => i===dates.length-1 ? '#E8724A' : 'rgba(232,114,74,0.4)'),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { min:0, max:100, ticks: { callback: v => v+'%' } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Mots échoués
+  const failS = {}, failO = {};
+  resultats.filter(r => !r.reussite_syllabation).forEach(r => { failS[r.mot] = (failS[r.mot]||0)+1; });
+  resultats.filter(r => r.smiley_oral === '😬').forEach(r => { failO[r.mot] = (failO[r.mot]||0)+1; });
+
+  function renderMots(obj, id, cls) {
+    const sorted = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    document.getElementById(id).innerHTML = sorted.length
+      ? sorted.map(([m,n]) => `<li class="mot-item"><span class="mot-word">🔸 ${m}</span><span class="mot-count ${cls}">${n}×</span></li>`).join('')
+      : `<li class="empty-data">Aucun échec enregistré 🎉</li>`;
+  }
+  renderMots(failS, 'mots-syllabation', '');
+  renderMots(failO, 'mots-oral', 'teal');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ÉTAPE 3 — ANALYSE IA
+// ═══════════════════════════════════════════════════════════
+function initAI() {
+  const sel = document.getElementById('sel-eleve-ai');
+  sel.innerHTML = eleves.length
+    ? eleves.map(e => `<option value="${e.prenom}">${e.prenom} ${e.nom} — ${e.l1}</option>`).join('')
+    : '<option value="">— Aucun élève configuré —</option>';
+  renderL1Groups();
+}
+
+function renderL1Groups() {
+  const grouped = {};
+  eleves.forEach(e => { if (!grouped[e.l1]) grouped[e.l1] = []; grouped[e.l1].push(e.prenom); });
+  const cont = document.getElementById('l1-groups-list');
+  const entries = Object.entries(grouped);
+  if (!entries.length) {
+    cont.innerHTML = '<p style="color:var(--mid);font-size:0.85rem;">Aucun groupe disponible. Configurez d\'abord vos élèves.</p>';
+    return;
+  }
+  cont.innerHTML = entries.map(([l1, prenoms]) => `
+    <div class="l1-group-item ${l1GroupSel===l1?'selected':''}" onclick="selectL1('${l1.replace(/'/g,"\\'")}',this)">
+      <div>
+        <div class="l1-name">🌍 ${l1}</div>
+        <div class="l1-count">${prenoms.join(', ')}</div>
+      </div>
+      <span class="tag tag-l">${prenoms.length} élève${prenoms.length>1?'s':''}</span>
+    </div>`).join('');
+}
+
+function selectL1(l1, el) {
+  l1GroupSel = l1;
+  document.querySelectorAll('.l1-group-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('ai-groupe-result').style.display = 'none';
+}
+
+function resetAiIndiv() { document.getElementById('ai-indiv-result').style.display = 'none'; }
+
+async function analyseIndividuelle() {
+  const apiKey = localStorage.getItem('sj_apikey');
+  if (!apiKey) { toast('⚠️ Clé API manquante — configurez-la en étape 1', 'error'); return; }
+  const prenom = document.getElementById('sel-eleve-ai').value;
+  if (!prenom) { toast('⚠️ Sélectionnez un élève', 'error'); return; }
+
+  const eleve = eleves.find(e => e.prenom === prenom);
+  const resultats = getResultats(prenom);
+
+  const div = document.getElementById('ai-indiv-result');
+  const btn = document.getElementById('btn-ai-indiv');
+  div.style.display = 'block';
+  div.className = 'ai-result loading';
+  div.textContent = '⏳ Analyse en cours…';
+  btn.innerHTML = '<span class="spinner"></span> Analyse en cours…';
+  btn.disabled = true;
+
+  const failS = {}, failO = {};
+  resultats.filter(r => !r.reussite_syllabation).forEach(r => { failS[r.mot] = (failS[r.mot]||0)+1; });
+  resultats.filter(r => r.smiley_oral === '😬').forEach(r => { failO[r.mot] = (failO[r.mot]||0)+1; });
+  const topS = Object.entries(failS).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,n])=>`${m}(${n}x)`).join(', ') || 'aucun';
+  const topO = Object.entries(failO).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([m,n])=>`${m}(${n}x)`).join(', ') || 'aucun';
+
+  const prompt = `Tu es expert en phonologie contrastive et didactique du FLE pour élèves allophones (EANA, 8-14 ans).
+
+Élève : ${eleve.prenom} ${eleve.nom}
+Langue maternelle (L1) : ${eleve.l1}
+Niveau SyllaboJeu : ${eleve.niveau}
+Mots joués au total : ${resultats.length}
+Mots échoués à la syllabation (puzzle) : ${topS}
+Mots échoués à l'oral (smiley 😬) : ${topO}
+
+Rédige une analyse courte et opérationnelle (6-8 lignes) en 3 parties :
+1. BILAN PHONOLOGIQUE : quelles tendances observes-tu dans les erreurs de cet élève ?
+2. HYPOTHÈSE L1 : formule une hypothèse phonologique contrastive entre ${eleve.l1} et le français (phonèmes absents, structures syllabiques, voyelles nasales, groupes consonantiques, etc.)
+3. SUGGESTIONS : propose 3-4 mots ciblés pour la prochaine séance en mode personnalisé, avec justification phonologique.
+
+Texte brut uniquement, pas de markdown, pas de tirets, paragraphes séparés.`;
+
+  try {
+    const resp = await callGemini(prompt, apiKey);
+    div.className = 'ai-result'; div.textContent = resp;
+  } catch(e) {
+    div.className = 'ai-result error'; div.textContent = '❌ ' + e.message;
+  }
+  btn.innerHTML = '🔍 Générer l\'analyse individuelle'; btn.disabled = false;
+}
+
+async function analyseGroupe() {
+  const apiKey = localStorage.getItem('sj_apikey');
+  if (!apiKey) { toast('⚠️ Clé API manquante — configurez-la en étape 1', 'error'); return; }
+  if (!l1GroupSel) { toast('⚠️ Sélectionnez un groupe L1', 'error'); return; }
+
+  const groupe = eleves.filter(e => e.l1 === l1GroupSel);
+  if (!groupe.length) { toast('Groupe vide', 'error'); return; }
+
+  const div = document.getElementById('ai-groupe-result');
+  const btn = document.getElementById('btn-ai-groupe');
+  div.style.display = 'block';
+  div.className = 'ai-result loading';
+  div.textContent = '⏳ Analyse groupée en cours…';
+  btn.innerHTML = '<span class="spinner"></span> Analyse en cours…';
+  btn.disabled = true;
+
+  const allS = {}, allO = {};
+  let totalMots = 0;
+  const details = groupe.map(e => {
+    const res = getResultats(e.prenom);
+    totalMots += res.length;
+    const iS = {}, iO = {};
+    res.filter(r => !r.reussite_syllabation).forEach(r => { allS[r.mot]=(allS[r.mot]||0)+1; iS[r.mot]=(iS[r.mot]||0)+1; });
+    res.filter(r => r.smiley_oral==='😬').forEach(r => { allO[r.mot]=(allO[r.mot]||0)+1; iO[r.mot]=(iO[r.mot]||0)+1; });
+    const topIS = Object.entries(iS).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>m).join(', ')||'aucun';
+    const topIO = Object.entries(iO).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([m])=>m).join(', ')||'aucun';
+    return `  - ${e.prenom} (${res.length} mots) : syllabation[${topIS}] oral[${topIO}]`;
+  }).join('\n');
+
+  const topS = Object.entries(allS).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([m,n])=>`${m}(${n}x)`).join(', ')||'aucun';
+  const topO = Object.entries(allO).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([m,n])=>`${m}(${n}x)`).join(', ')||'aucun';
+
+  const prompt = `Tu es expert en phonologie contrastive et didactique du FLE pour élèves allophones (EANA, 8-14 ans).
+
+Groupe : ${groupe.length} élève(s) de langue maternelle ${l1GroupSel}
+Élèves : ${groupe.map(e=>e.prenom+' '+e.nom).join(', ')}
+Total mots joués par le groupe : ${totalMots}
+
+Erreurs collectives les plus fréquentes :
+- Syllabation : ${topS}
+- Oral (😬) : ${topO}
+
+Détail par élève :
+${details}
+
+Rédige une analyse groupée (8-12 lignes) en 3 parties :
+1. PATTERNS COLLECTIFS : quels mots ou structures phonologiques posent problème à tout le groupe ?
+2. HYPOTHÈSE PHONOLOGIQUE L1 (${l1GroupSel}) : ces erreurs communes sont-elles probablement une interférence structurelle de la L1 sur le français ? Justifie avec des arguments phonologiques précis (phonèmes absents, structure syllabique CV vs CVC, voyelles arrondies, nasales, etc.)
+3. DIFFÉRENCIATION INDIVIDUEL vs COLLECTIF : quelles difficultés semblent propres à un seul élève (à traiter en remédiation individuelle) vs communes à tout le groupe (à traiter en séance collective) ?
+
+Texte brut uniquement, pas de markdown, pas de tirets, paragraphes séparés.`;
+
+  try {
+    const resp = await callGemini(prompt, apiKey);
+    div.className = 'ai-result'; div.textContent = resp;
+  } catch(e) {
+    div.className = 'ai-result error'; div.textContent = '❌ ' + e.message;
+  }
+  btn.innerHTML = '🌍 Analyser ce groupe'; btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// APPEL GEMINI
+// ═══════════════════════════════════════════════════════════
+async function callGemini(prompt, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 900 }
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Erreur HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Réponse vide de Gemini — vérifiez votre clé API');
+  return text.trim();
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type==='error' ? ' error' : '');
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
